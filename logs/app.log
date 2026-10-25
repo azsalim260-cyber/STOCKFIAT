@@ -1,0 +1,46 @@
+2026-10-25 11:18:47  INFO      __main__ — ═══ Gestionnaire Parc IT v2.0 starting ═══
+2026-10-25 11:18:47  INFO      database.connection — Database initialized at 'c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\parc.db' (WAL mode).
+2026-10-25 11:28:54  INFO      database.backup — Backup created: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_112854.db
+2026-10-25 11:28:54  INFO      views.main_window — Close-time backup: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_112854.db
+2026-10-25 11:28:54  INFO      __main__ — Application exited with code 0.
+2026-10-25 11:28:58  INFO      __main__ — ═══ Gestionnaire Parc IT v2.0 starting ═══
+2026-10-25 11:28:58  INFO      database.connection — Database initialized at 'c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\parc.db' (WAL mode).
+2026-10-25 11:29:18  INFO      database.backup — Backup created: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_112918.db
+2026-10-25 11:29:18  INFO      views.main_window — Close-time backup: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_112918.db
+2026-10-25 11:29:18  INFO      __main__ — Application exited with code 0.
+2026-10-25 11:40:36  INFO      __main__ — ═══ Gestionnaire Parc IT v2.0 starting ═══
+2026-10-25 11:40:36  INFO      database.connection — Database initialized at 'c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\parc.db' (WAL mode).
+2026-10-25 11:41:28  INFO      database.backup — Backup created: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_114128.db
+2026-10-25 11:41:28  INFO      views.main_window — Close-time backup: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_114128.db
+2026-10-25 11:41:28  INFO      __main__ — Application exited with code 0.
+2026-10-25 11:41:31  INFO      __main__ — ═══ Gestionnaire Parc IT v2.0 starting ═══
+2026-10-25 11:41:31  INFO      database.connection — Database initialized at 'c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\parc.db' (WAL mode).
+2026-10-25 11:41:48  INFO      database.backup — Backup created: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_114148.db
+2026-10-25 11:41:48  INFO      views.main_window — Close-time backup: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_114148.db
+2026-10-25 11:41:48  INFO      __main__ — Application exited with code 0.
+2026-10-25 11:50:15  INFO      __main__ — ═══ Gestionnaire Parc IT v2.0 starting ═══
+2026-10-25 11:50:15  INFO      database.connection — Database initialized at 'c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\parc.db' (WAL mode).
+2026-10-25 11:50:41  INFO      __main__ — User logged in: admin (Role: ADMIN)
+2026-10-25 11:53:30  INFO      database.backup — Backup created: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_115330.db
+2026-10-25 11:53:30  INFO      views.main_window — Close-time backup: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_115330.db
+2026-10-25 11:53:30  INFO      __main__ — Application exited with code 0.
+2026-10-25 11:55:13  INFO      __main__ — ═══ Gestionnaire Parc IT v2.0 starting ═══
+2026-10-25 11:55:13  INFO      database.connection — Database initialized at 'c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\parc.db' (WAL mode).
+2026-10-25 11:55:13  INFO      models.user_model — Default admin created (username: 'admin', password: 'admin')
+2026-10-25 11:55:19  INFO      __main__ — User logged in: admin (Role: ADMIN)
+2026-10-25 11:56:01  INFO      database.backup — Backup created: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_115601.db
+2026-10-25 11:56:01  INFO      views.main_window — Close-time backup: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_115601.db
+2026-10-25 11:56:01  INFO      __main__ — Application exited with code 0.
+2026-10-25 12:38:40  INFO      __main__ — ═══ Gestionnaire Parc IT v2.0 starting ═══
+2026-10-25 12:38:40  INFO      database.connection — Database initialized at 'c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\parc.db' (WAL mode).
+2026-10-25 12:38:58  INFO      __main__ — User logged in: admin (Role: ADMIN)
+2026-10-25 12:39:28  INFO      models.user_model — User 1 updated.
+2026-10-25 12:40:22  INFO      models.user_model — User created: USER (LECTEUR)
+2026-10-25 13:01:02  INFO      __main__ — ═══ Gestionnaire Parc IT v2.0 starting ═══
+2026-10-25 13:01:02  INFO      database.connection — Database initialized at 'c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\parc.db' (WAL mode).
+2026-10-25 13:01:11  INFO      __main__ — User logged in: admin (Role: ADMIN)
+2026-10-25 13:02:04  INFO      models.stock_laptop_model — Inserted stock laptop ID=1 FAN=00000
+2026-10-25 13:02:58  INFO      models.stock_laptop_model — Inserted stock laptop ID=2 FAN=FREE
+2026-10-25 13:05:02  INFO      database.backup — Backup created: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_130502.db
+2026-10-25 13:05:02  INFO      views.main_window — Close-time backup: c:\Users\SE71106\.gemini\antigravity\scratch\parc_informatique\backups\parc_backup_20261025_130502.db
+2026-10-25 13:05:02  INFO      __main__ — Application exited with code 0.
