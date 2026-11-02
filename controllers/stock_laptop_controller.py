@@ -2,9 +2,9 @@
 controllers/stock_laptop_controller.py — CONTROLLER layer for Stock Laptops
 ───────────────────────────────────────────────────────────────────────────
 Gère la logique métier du stock des laptops :
-  • Chargement des données avec filtres (recherche par FAN et filtre par licence)
-  • Ajout, modification, suppression avec contrôle des droits (RBAC)
-  • Validation de la condition d'unicité du NUM FAN
+  • Chargement des données avec filtres (recherche par FAN, recherche par USER ID, filtre par licence)
+  • Ajout (supporte l'ajout un par un si FAN=='FREE' et quantité > 1), modification, suppression avec RBAC
+  • Validation de la condition d'unicité du NUM FAN (exempté pour 'FREE')
   • Impression / Exportation vers fichier Excel (.xlsx / .xls / .csv)
 """
 
@@ -38,10 +38,11 @@ class StockLaptopController:
     def refresh(self) -> None:
         """Charge et filtre les données du stock selon les critères de l'UI."""
         search_fan = self._view.get_search_fan()
+        search_user_id = self._view.get_search_user_id()
         filter_license = self._view.get_filter_license()
 
         try:
-            rows = self._model.fetch_all(search_fan, filter_license)
+            rows = self._model.fetch_all(search_fan, search_user_id, filter_license)
             stats = self._model.get_stats()
             self._view.populate_table(rows)
             self._view.update_stats(stats, count_shown=len(rows))
@@ -63,18 +64,26 @@ class StockLaptopController:
         if dlg.exec():
             data = dlg.get_data()
             try:
-                self._model.insert(
+                inserted_ids = self._model.insert(
                     fan=data["fan"],
                     serial=data["serial"],
                     model=data["model"],
                     quantite=data["quantite"],
                     license=data["license"],
+                    user_id=data.get("user_id", "")
                 )
                 self.refresh()
-                QMessageBox.information(
-                    self._view, "Succès",
-                    f"✔ Le laptop « {data['fan']} » a été ajouté au stock avec succès."
-                )
+
+                if len(inserted_ids) > 1:
+                    QMessageBox.information(
+                        self._view, "Ajout réussi",
+                        f"✔ {len(inserted_ids)} laptops libres (FREE) ont été générés et affichés un par un dans le tableau avec succès."
+                    )
+                else:
+                    QMessageBox.information(
+                        self._view, "Succès",
+                        f"✔ Le laptop « {data['fan']} » a été ajouté au stock avec succès."
+                    )
             except Exception as exc:
                 logger.error("Add laptop error: %s", exc)
                 QMessageBox.critical(self._view, "Erreur d'ajout", str(exc))
@@ -104,6 +113,7 @@ class StockLaptopController:
                     model=data["model"],
                     quantite=data["quantite"],
                     license=data["license"],
+                    user_id=data.get("user_id", "")
                 )
                 self.refresh()
                 QMessageBox.information(
@@ -161,14 +171,19 @@ class StockLaptopController:
         try:
             # Récupérer les données filtrées actuelles
             search_fan = self._view.get_search_fan()
+            search_user_id = self._view.get_search_user_id()
             filter_license = self._view.get_filter_license()
-            records = self._model.fetch_all(search_fan, filter_license)
+            records = self._model.fetch_all(search_fan, search_user_id, filter_license)
 
-            headers = ["ID", "NUM FAN", "SERIAL", "MODEL", "QUANTITÉ", "OS LICENSE", "DATE CRÉATION"]
+            headers = [
+                "ID", "NUM FAN", "USER ID", "SERIAL", "MODEL",
+                "QUANTITÉ", "OS LICENSE", "DATE CRÉATION"
+            ]
             rows_data = [
                 [
                     r.get("id"),
                     r.get("fan"),
+                    r.get("user_id") or "",
                     r.get("serial") or "",
                     r.get("model") or "",
                     r.get("quantite") or 1,
@@ -189,4 +204,3 @@ class StockLaptopController:
         except Exception as exc:
             logger.error("Export stock to Excel error: %s", exc)
             QMessageBox.critical(self._view, "Erreur d'exportation", f"Impossible d'exporter le fichier : {exc}")
-

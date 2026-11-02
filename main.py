@@ -8,14 +8,15 @@ Sets up:
   • QApplication + global stylesheet
   • Authentication via LoginDialog before launching MainWindow
   • MainWindow (MVC orchestrator with RBAC permissions)
-  • Global exception hook so uncaught errors are written to app.log
+  • Global exception hook so uncaught errors are written to app.log and displayed
 """
 
 import sys
 import logging
 import traceback
+import ctypes
 
-from PyQt6.QtWidgets import QApplication, QMessageBox  # type: ignore[import-not-found]
+from PyQt6.QtWidgets import QApplication, QMessageBox  # pyright: ignore[reportMissingImports]  # type: ignore[import-not-found]
 
 from config import APP_NAME, APP_VERSION, LOG_FILE
 from database.connection import init_db
@@ -57,6 +58,14 @@ def _excepthook(exc_type, exc_value, exc_tb) -> None:
             f"Une erreur critique s'est produite.\n\n{exc_value}\n\n"
             f"Détails écrits dans :\n{LOG_FILE}",
         )
+    else:
+        # Fallback to Windows native dialog if QApplication is not yet ready
+        ctypes.windll.user32.MessageBoxW(
+            0,
+            f"Une erreur critique s'est produite lors du démarrage :\n\n{exc_value}\n\nDétails : {LOG_FILE}",
+            "Erreur Parc IT",
+            0x10  # MB_ICONERROR
+        )
 
 
 # ── Entry point ───────────────────────────────────────────────
@@ -67,21 +76,29 @@ def main() -> None:
     logger = logging.getLogger(__name__)
     logger.info("═══ %s v%s starting ═══", APP_NAME, APP_VERSION)
 
-    # Initialise DB (WAL mode + tables + indexes + default admin)
-    try:
-        init_db()
-    except Exception as exc:
-        print(f"[FATAL] Database init failed: {exc}", file=sys.stderr)
-        sys.exit(1)
-
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
     app.setApplicationVersion(APP_VERSION)
     app.setStyleSheet(STYLE)
 
+    # Initialise DB (WAL mode + tables + indexes + default admin + migration)
+    try:
+        init_db()
+    except Exception as exc:
+        logger.critical("Database init failed: %s", exc)
+        QMessageBox.critical(
+            None,
+            "Erreur Base de Données",
+            f"Impossible d'initialiser la base de données :\n{exc}\n\nConsultez le fichier log : {LOG_FILE}",
+        )
+        sys.exit(1)
+
+    # Prevent Qt from prematurely quitting when LoginDialog closes
+    app.setQuitOnLastWindowClosed(False)
+
     # ── Écran de connexion (Login Dialog) ──
     login_dlg = LoginDialog()
-    if login_dlg.exec() != LoginDialog.DialogCode.Accepted:
+    if login_dlg.exec() != LoginDialog.DialogCode.Accepted or not login_dlg.authenticated_user:
         logger.info("Login cancelled by user. Exiting.")
         sys.exit(0)
 
@@ -95,6 +112,9 @@ def main() -> None:
     # ── Lancement de la fenêtre principale avec le profil utilisateur ──
     window = MainWindow(current_user=current_user)
     window.show()
+
+    # Re-enable standard quit behavior on main window close
+    app.setQuitOnLastWindowClosed(True)
 
     exit_code = app.exec()
     logger.info("Application exited with code %d.", exit_code)

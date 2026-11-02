@@ -3,17 +3,17 @@ views/dialogs/login_dialog.py — Formulaire de connexion (Login Dialog)
 ────────────────────────────────────────────────────────────────────
 Fenêtre de connexion au démarrage :
   • Authentification sécurisée via UserModel (PBKDF2-HMAC-SHA256)
-  • Compte administrateur par défaut : admin / admin
+  • Compte administrateur par défaut : admin / admin pré-rempli pour accès immédiat
   • Gestion des erreurs claire et ergonomique
   • Support de la touche Entrée pour soumettre le formulaire
 """
 
-from PyQt6.QtWidgets import (
+from PyQt6.QtWidgets import (  # type: ignore[import-not-found]
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QFrame, QMessageBox, QGraphicsDropShadowEffect
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QColor, QIcon, QKeySequence
+from PyQt6.QtCore import Qt  # type: ignore[import-not-found]
+from PyQt6.QtGui import QFont, QColor, QIcon, QKeySequence  # type: ignore[import-not-found]
 
 from models.user_model import UserModel
 
@@ -31,21 +31,24 @@ class LoginDialog(QDialog):
         self.authenticated_user: dict | None = None
 
         self.setWindowTitle("Connexion — Gestionnaire de Parc IT")
-        self.setFixedSize(420, 460)
+        self.setFixedSize(430, 480)
         self.setModal(True)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
         self._build_ui()
 
+    def _build_ui() -> None:
+        pass  # will be overridden by instance method
+
     def _build_ui(self) -> None:
         layout = QVBoxLayout(self)
-        layout.setSpacing(16)
-        layout.setContentsMargins(36, 32, 36, 32)
+        layout.setSpacing(14)
+        layout.setContentsMargins(36, 28, 36, 28)
 
         # ── En-tête / Logo ──
         lbl_logo = QLabel("🖥️")
         lbl_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        lbl_logo.setStyleSheet("font-size: 46px; margin-bottom: 2px;")
+        lbl_logo.setStyleSheet("font-size: 44px; margin-bottom: 2px;")
         layout.addWidget(lbl_logo)
 
         lbl_title = QLabel("Gestionnaire de Parc IT")
@@ -57,13 +60,13 @@ class LoginDialog(QDialog):
         lbl_sub = QLabel("Veuillez vous authentifier pour continuer")
         lbl_sub.setAlignment(Qt.AlignmentFlag.AlignCenter)
         lbl_sub.setFont(QFont("Segoe UI", 10))
-        lbl_sub.setStyleSheet("color: #7F8C8D; margin-bottom: 6px;")
+        lbl_sub.setStyleSheet("color: #7F8C8D; margin-bottom: 4px;")
         layout.addWidget(lbl_sub)
 
         # Séparateur décoratif
         sep = QFrame()
         sep.setFrameShape(QFrame.Shape.HLine)
-        sep.setStyleSheet("color: #D5D8DC; margin-bottom: 10px;")
+        sep.setStyleSheet("color: #D5D8DC; margin-bottom: 8px;")
         layout.addWidget(sep)
 
         # ── Message d'erreur dynamique ──
@@ -80,7 +83,7 @@ class LoginDialog(QDialog):
         lbl_user.setStyleSheet("color: #2C3E50;")
         layout.addWidget(lbl_user)
 
-        self._inp_username = QLineEdit()
+        self._inp_username = QLineEdit("admin")
         self._inp_username.setPlaceholderText("Ex: admin")
         self._inp_username.setObjectName("login_input")
         self._inp_username.setStyleSheet("""
@@ -104,7 +107,7 @@ class LoginDialog(QDialog):
         lbl_pwd.setStyleSheet("color: #2C3E50;")
         layout.addWidget(lbl_pwd)
 
-        self._inp_password = QLineEdit()
+        self._inp_password = QLineEdit("admin")
         self._inp_password.setEchoMode(QLineEdit.EchoMode.Password)
         self._inp_password.setPlaceholderText("••••••••")
         self._inp_password.setObjectName("login_pwd")
@@ -124,10 +127,16 @@ class LoginDialog(QDialog):
         self._inp_password.returnPressed.connect(self._handle_login)
         layout.addWidget(self._inp_password)
 
+        # Indication du compte par défaut
+        lbl_hint = QLabel("💡 Compte par défaut : <b>admin</b> / <b>admin</b>")
+        lbl_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        lbl_hint.setStyleSheet("color: #5D6D7E; font-size: 11px; margin-top: 2px;")
+        layout.addWidget(lbl_hint)
+
         # ── Boutons d'action ──
         btn_layout = QHBoxLayout()
         btn_layout.setSpacing(12)
-        btn_layout.setContentsMargins(0, 12, 0, 0)
+        btn_layout.setContentsMargins(0, 10, 0, 0)
 
         self._btn_quit = QPushButton("Quitter")
         self._btn_quit.setFixedHeight(38)
@@ -173,8 +182,8 @@ class LoginDialog(QDialog):
 
         layout.addLayout(btn_layout)
 
-        # Focus initial
-        self._inp_username.setFocus()
+        # Focus initial sur le bouton se connecter ou mot de passe
+        self._btn_login.setFocus()
 
     def _clear_error(self) -> None:
         if self._lbl_error.isVisible():
@@ -209,4 +218,3 @@ class LoginDialog(QDialog):
                 self._inp_password.setFocus()
         except Exception as exc:
             self._show_error(f"Erreur de connexion : {exc}")
-

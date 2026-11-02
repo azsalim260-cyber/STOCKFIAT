@@ -134,7 +134,7 @@ class MainWindow(QMainWindow):
         tb.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
 
         # Logo / Titre
-        app_lbl = QLabel("🖥️  Parc IT & Télécom")
+        app_lbl = QLabel("🖥️  Parc IT & Téléphonie")
         app_lbl.setFont(QFont("Segoe UI", 13, QFont.Weight.Bold))
         app_lbl.setStyleSheet("color: white; padding: 0 10px;")
         tb.addWidget(app_lbl)

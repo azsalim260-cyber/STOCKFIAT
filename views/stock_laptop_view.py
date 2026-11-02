@@ -4,10 +4,12 @@ views/stock_laptop_view.py — Écran de gestion du Stock Laptops (VIEW layer)
 Fonctionnalités :
   • Bouton « Ajouter Laptop » ouvrant le formulaire de saisie
   • Affichage des laptops sous forme de tableau interactif
-  • Icônes Modifier (✏️) et Supprimer (🗑️) intégrées dans chaque ligne
+  • Saisie et affichage de la colonne USER ID
   • Barre de recherche par NUM FAN
+  • Barre de recherche par USER ID
   • Menu déroulant de filtre par OS LICENSE (Toutes, Sans licence, Avec licence)
-  • Bouton « Imprimer » pour exporter/imprimer tout le tableau dans un fichier Excel
+  • Ligne entière colorée en VERT lorsque le laptop est libre (FAN == 'FREE')
+  • Bouton « Imprimer (Excel) » pour exporter/imprimer tout le tableau dans un fichier Excel
   • Contrôle des accès selon le rôle de l'utilisateur (RBAC)
 """
 
@@ -44,6 +46,7 @@ class StockLaptopView(QWidget):
     COLUMNS = [
         ("id", "ID"),
         ("fan", "NUM FAN"),
+        ("user_id", "USER ID"),
         ("serial", "SERIAL"),
         ("model", "MODEL"),
         ("quantite", "QUANTITÉ"),
@@ -68,7 +71,7 @@ class StockLaptopView(QWidget):
 
         # ── Barre d'actions supérieure ──
         top_bar = QHBoxLayout()
-        top_bar.setSpacing(10)
+        top_bar.setSpacing(8)
 
         # 1. Bouton "Ajouter Laptop"
         self._btn_add = QPushButton("➕  Ajouter Laptop")
@@ -80,7 +83,7 @@ class StockLaptopView(QWidget):
                 color: white;
                 font-weight: 700;
                 font-size: 13px;
-                padding: 7px 18px;
+                padding: 7px 16px;
                 border: none;
                 border-radius: 6px;
             }
@@ -101,7 +104,7 @@ class StockLaptopView(QWidget):
         self._search_fan = QLineEdit()
         self._search_fan.setPlaceholderText("🔍  Rechercher par FAN...")
         self._search_fan.setClearButtonEnabled(True)
-        self._search_fan.setMinimumWidth(220)
+        self._search_fan.setMinimumWidth(190)
         self._search_fan.setStyleSheet("""
             QLineEdit {
                 border: 2px solid #BDC3C7;
@@ -117,10 +120,30 @@ class StockLaptopView(QWidget):
         self._search_fan.textChanged.connect(self._on_search_changed)
         top_bar.addWidget(self._search_fan)
 
-        # 3. Liste déroulante de filtre par LICENSE
+        # 3. Barre de recherche par USER ID
+        self._search_user_id = QLineEdit()
+        self._search_user_id.setPlaceholderText("🔍  Rechercher par USER ID...")
+        self._search_user_id.setClearButtonEnabled(True)
+        self._search_user_id.setMinimumWidth(190)
+        self._search_user_id.setStyleSheet("""
+            QLineEdit {
+                border: 2px solid #BDC3C7;
+                border-radius: 16px;
+                padding: 5px 12px;
+                background-color: white;
+                font-size: 12px;
+            }
+            QLineEdit:focus {
+                border-color: #2E86C1;
+            }
+        """)
+        self._search_user_id.textChanged.connect(self._on_search_changed)
+        top_bar.addWidget(self._search_user_id)
+
+        # 4. Liste déroulante de filtre par LICENSE
         lbl_filter = QLabel("Licence :")
         lbl_filter.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
-        lbl_filter.setStyleSheet("color: #2C3E50; margin-left: 6px;")
+        lbl_filter.setStyleSheet("color: #2C3E50; margin-left: 4px;")
         top_bar.addWidget(lbl_filter)
 
         self._combo_license = QComboBox()
@@ -133,7 +156,7 @@ class StockLaptopView(QWidget):
 
         top_bar.addStretch()
 
-        # 4. Bouton "Imprimer / Exporter Excel"
+        # 5. Bouton "Imprimer / Exporter Excel"
         self._btn_print = QPushButton("🖨️  Imprimer (Excel)")
         self._btn_print.setObjectName("btn_print_excel")
         self._btn_print.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -184,14 +207,15 @@ class StockLaptopView(QWidget):
         self._table.horizontalHeader().setStretchLastSection(True)
 
         # Largeurs initiales des colonnes
-        self._table.setColumnWidth(0, 50)   # ID
-        self._table.setColumnWidth(1, 140)  # NUM FAN
-        self._table.setColumnWidth(2, 160)  # SERIAL
-        self._table.setColumnWidth(3, 200)  # MODEL
-        self._table.setColumnWidth(4, 90)   # QUANTITÉ
-        self._table.setColumnWidth(5, 140)  # OS LICENSE
-        self._table.setColumnWidth(6, 150)  # DATE AJOUT
-        self._table.setColumnWidth(7, 120)  # ACTIONS
+        self._table.setColumnWidth(0, 45)   # ID
+        self._table.setColumnWidth(1, 130)  # NUM FAN
+        self._table.setColumnWidth(2, 130)  # USER ID
+        self._table.setColumnWidth(3, 140)  # SERIAL
+        self._table.setColumnWidth(4, 180)  # MODEL
+        self._table.setColumnWidth(5, 80)   # QUANTITÉ
+        self._table.setColumnWidth(6, 130)  # OS LICENSE
+        self._table.setColumnWidth(7, 140)  # DATE AJOUT
+        self._table.setColumnWidth(8, 110)  # ACTIONS
 
         self._table.doubleClicked.connect(self._on_table_double_clicked)
         layout.addWidget(self._table)
@@ -208,12 +232,18 @@ class StockLaptopView(QWidget):
     def get_search_fan(self) -> str:
         return self._search_fan.text().strip()
 
+    def get_search_user_id(self) -> str:
+        return self._search_user_id.text().strip()
+
     def get_filter_license(self) -> str:
         return self._combo_license.currentText()
 
     # ── Remplissage du tableau ──
     def populate_table(self, rows: list[dict]) -> None:
-        """Remplit le tableau avec les équipements du stock et insère les boutons d'action."""
+        """
+        Remplit le tableau avec les équipements du stock.
+        Règle : Lorsque le laptop est libre (FAN == 'FREE'), toute la ligne est colorée en VERT.
+        """
         self._table.setSortingEnabled(False)
         self._table.setRowCount(len(rows))
 
@@ -221,48 +251,67 @@ class StockLaptopView(QWidget):
         can_edit = perms.get("can_edit", False)
         can_delete = perms.get("can_delete", False)
 
+        # Couleurs pour les lignes "FREE" (vert pastel moderne + texte lisible)
+        color_green_bg = QColor("#D4EFDF")    # Fond vert pastel
+        color_green_text = QColor("#145A32")  # Texte vert foncé pour fort contraste
+
         for r, row in enumerate(rows):
+            fan_val = str(row.get("fan") or "").strip()
+            user_id_val = str(row.get("user_id") or "").strip()
+
+            # Détection de l'état "FREE" (libre)
+            is_free = (fan_val.upper() == "FREE") or (user_id_val.upper() in ("FREE", "LIBRE"))
+
             # 0. ID
             item_id = QTableWidgetItem(str(row.get("id")))
             item_id.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             self._table.setItem(r, 0, item_id)
 
             # 1. NUM FAN (en gras)
-            item_fan = QTableWidgetItem(str(row.get("fan") or ""))
+            display_fan = "FREE 🟢" if fan_val.upper() == "FREE" else fan_val
+            item_fan = QTableWidgetItem(display_fan)
             item_fan.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
             self._table.setItem(r, 1, item_fan)
 
-            # 2. SERIAL
-            self._table.setItem(r, 2, QTableWidgetItem(str(row.get("serial") or "")))
+            # 2. USER ID
+            display_uid = user_id_val if user_id_val else ("(Libre)" if is_free else "-")
+            item_uid = QTableWidgetItem(display_uid)
+            if not user_id_val and is_free:
+                item_uid.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
+            self._table.setItem(r, 2, item_uid)
 
-            # 3. MODEL
-            self._table.setItem(r, 3, QTableWidgetItem(str(row.get("model") or "")))
+            # 3. SERIAL
+            self._table.setItem(r, 3, QTableWidgetItem(str(row.get("serial") or "")))
 
-            # 4. QUANTITÉ (centrée)
+            # 4. MODEL
+            self._table.setItem(r, 4, QTableWidgetItem(str(row.get("model") or "")))
+
+            # 5. QUANTITÉ (centrée)
             item_qty = QTableWidgetItem(str(row.get("quantite") or 1))
             item_qty.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self._table.setItem(r, 4, item_qty)
+            self._table.setItem(r, 5, item_qty)
 
-            # 5. OS LICENSE (avec couleur/style)
+            # 6. OS LICENSE (avec couleur/style)
             license_val = str(row.get("license") or "Sans licence")
             item_lic = QTableWidgetItem(license_val)
             item_lic.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
             item_lic.setFont(QFont("Segoe UI", 9, QFont.Weight.Bold))
-            if license_val == "Avec licence":
-                item_lic.setForeground(QColor("#1E8449"))  # Vert
-            else:
-                item_lic.setForeground(QColor("#7F8C8D"))  # Gris
-            self._table.setItem(r, 5, item_lic)
+            if not is_free:
+                if license_val == "Avec licence":
+                    item_lic.setForeground(QColor("#1E8449"))  # Vert
+                else:
+                    item_lic.setForeground(QColor("#7F8C8D"))  # Gris
+            self._table.setItem(r, 6, item_lic)
 
-            # 6. DATE AJOUT
+            # 7. DATE AJOUT
             item_date = QTableWidgetItem(str(row.get("created_at") or ""))
             item_date.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-            self._table.setItem(r, 6, item_date)
+            self._table.setItem(r, 7, item_date)
 
             # Stocker les données complètes sur la 1ère colonne
             item_id.setData(Qt.ItemDataRole.UserRole, row)
 
-            # 7. Colonne ACTIONS : Icônes Modifier ✏️ et Supprimer 🗑️
+            # 8. Colonne ACTIONS : Icônes Modifier ✏️ et Supprimer 🗑️
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
             action_layout.setContentsMargins(4, 2, 4, 2)
@@ -309,7 +358,16 @@ class StockLaptopView(QWidget):
             btn_del_row.clicked.connect(lambda _, row_id=row["id"], fan_num=row["fan"]: self._ctrl.on_delete(row_id, fan_num))
             action_layout.addWidget(btn_del_row)
 
-            self._table.setCellWidget(r, 7, action_widget)
+            # ── SI LE LAPTOP EST LIBRE (FREE) : TOUTE LA LIGNE EN VERT ──
+            if is_free:
+                for c in range(8):  # Pour toutes les colonnes 0 à 7
+                    cell_item = self._table.item(r, c)
+                    if cell_item:
+                        cell_item.setBackground(color_green_bg)
+                        cell_item.setForeground(color_green_text)
+                action_widget.setStyleSheet("background-color: #D4EFDF; border-radius: 4px;")
+
+            self._table.setCellWidget(r, 8, action_widget)
 
         self._table.setSortingEnabled(True)
 
@@ -317,13 +375,15 @@ class StockLaptopView(QWidget):
         """Met à jour le bandeau d'information statistique."""
         total_qty = stats.get("total_quantite", 0)
         total_refs = stats.get("total_references", 0)
+        free_qty = stats.get("free_laptops", 0)
         with_lic = stats.get("avec_licence", 0)
         without_lic = stats.get("sans_licence", 0)
 
         self._lbl_stats.setText(
             f"📊  Stock Total : <b>{total_qty}</b> pc(s) ({total_refs} références)  •  "
-            f"🟢 Avec licence : <b>{with_lic}</b>  •  "
-            f"⚪ Sans licence : <b>{without_lic}</b>  •  "
+            f"🟢 <b>Libres (FREE) : {free_qty}</b>  •  "
+            f"Avec licence : <b>{with_lic}</b>  •  "
+            f"Sans licence : <b>{without_lic}</b>  •  "
             f"Affichés : <b>{count_shown}</b>"
         )
 
@@ -355,4 +415,3 @@ class StockLaptopView(QWidget):
             data = item_id.data(Qt.ItemDataRole.UserRole)
             if data:
                 self._ctrl.on_edit(data["id"], data)
-

@@ -2,10 +2,11 @@
 views/dialogs/stock_laptop_dialog.py — Formulaire de saisie d'un Laptop en Stock
 ───────────────────────────────────────────────────────────────────────────────
 Contenu :
-  • NUM FAN (vérification d'unicité)
+  • NUM FAN (vérification d'unicité, sauf si 'FREE' qui est accepté en illimité)
+  • USER ID (Champ optionnel, non obligatoire)
   • SERIAL
   • MODEL
-  • QUANTITE (nombre entier >= 1)
+  • QUANTITE (si FAN=='FREE' et quantité > 1, ils seront ajoutés un par un)
   • OS LICENSE (Liste déroulante : 'Sans licence', 'Avec licence')
   • Bouton Ajouter / Enregistrer & Bouton Annuler
 """
@@ -32,7 +33,7 @@ class StockLaptopDialog(QDialog):
 
         title = "Modifier Laptop du Stock" if self.is_edit_mode else "Ajouter Laptop au Stock"
         self.setWindowTitle(title)
-        self.setFixedWidth(480)
+        self.setFixedWidth(500)
         self.setModal(True)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
@@ -60,34 +61,47 @@ class StockLaptopDialog(QDialog):
         grid.setColumnStretch(1, 1)
 
         row = 0
-        # 1. NUM FAN (Unique)
+        # 1. NUM FAN (Unique sauf si 'FREE')
         lbl_fan = QLabel("NUM FAN : *")
         lbl_fan.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         self._inp_fan = QLineEdit(self.data.get("fan", ""))
-        self._inp_fan.setPlaceholderText("Ex: FAN-8820")
+        self._inp_fan.setPlaceholderText("Ex: FAN-8820 ou FREE")
+        self._inp_fan.setFixedHeight(34)
         grid.addWidget(lbl_fan, row, 0)
         grid.addWidget(self._inp_fan, row, 1)
 
         row += 1
-        # 2. SERIAL
+        # 2. USER ID (NON OBLIGATOIRE)
+        lbl_user_id = QLabel("USER ID :")
+        lbl_user_id.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
+        self._inp_user_id = QLineEdit(self.data.get("user_id", ""))
+        self._inp_user_id.setPlaceholderText("Ex: U10492 (optionnel)")
+        self._inp_user_id.setFixedHeight(34)
+        grid.addWidget(lbl_user_id, row, 0)
+        grid.addWidget(self._inp_user_id, row, 1)
+
+        row += 1
+        # 3. SERIAL
         lbl_serial = QLabel("SERIAL :")
         lbl_serial.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         self._inp_serial = QLineEdit(self.data.get("serial", ""))
         self._inp_serial.setPlaceholderText("Ex: CNU910283X")
+        self._inp_serial.setFixedHeight(34)
         grid.addWidget(lbl_serial, row, 0)
         grid.addWidget(self._inp_serial, row, 1)
 
         row += 1
-        # 3. MODEL
+        # 4. MODEL
         lbl_model = QLabel("MODEL :")
         lbl_model.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         self._inp_model = QLineEdit(self.data.get("model", ""))
         self._inp_model.setPlaceholderText("Ex: HP EliteBook 840 G8")
+        self._inp_model.setFixedHeight(34)
         grid.addWidget(lbl_model, row, 0)
         grid.addWidget(self._inp_model, row, 1)
 
         row += 1
-        # 4. QUANTITÉ
+        # 5. QUANTITÉ
         lbl_qty = QLabel("QUANTITÉ : *")
         lbl_qty.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         self._spin_qty = QSpinBox()
@@ -98,7 +112,7 @@ class StockLaptopDialog(QDialog):
         grid.addWidget(self._spin_qty, row, 1)
 
         row += 1
-        # 5. OS LICENSE (Droplist: Sans licence, Avec licence)
+        # 6. OS LICENSE (Droplist: Sans licence, Avec licence)
         lbl_lic = QLabel("OS LICENSE : *")
         lbl_lic.setFont(QFont("Segoe UI", 10, QFont.Weight.Bold))
         self._combo_license = QComboBox()
@@ -116,9 +130,16 @@ class StockLaptopDialog(QDialog):
 
         layout.addLayout(grid)
 
-        # Note de validation
-        lbl_note = QLabel("ℹ️  Le numéro FAN doit être unique dans tout le stock.")
-        lbl_note.setStyleSheet("color: #7F8C8D; font-size: 11px; margin-top: 4px;")
+        # Note d'information dynamique
+        lbl_note = QLabel(
+            "💡 <b>Astuce :</b> Si vous saisissez <b>FREE</b> dans le NUM FAN avec une quantité supérieure à 1 (ex: 30), "
+            "les laptops seront créés et affichés <b>un par un en vert</b> dans le stock."
+        )
+        lbl_note.setWordWrap(True)
+        lbl_note.setStyleSheet(
+            "color: #196F3D; background-color: #E8F8F5; border: 1px solid #A3E4D7; "
+            "border-radius: 6px; padding: 8px 10px; font-size: 11px; margin-top: 4px;"
+        )
         layout.addWidget(lbl_note)
 
         # ── Boutons d'action ──
@@ -143,21 +164,23 @@ class StockLaptopDialog(QDialog):
     def _validate_and_accept(self) -> None:
         fan = self._inp_fan.text().strip()
         if not fan:
-            QMessageBox.warning(self, "Champ requis", "Veuillez saisir le numéro FAN.")
+            QMessageBox.warning(self, "Champ requis", "Veuillez saisir le numéro FAN (ou 'FREE').")
             self._inp_fan.setFocus()
             return
 
-        # ── Vérification condition d'unicité du FAN ──
-        exclude_id = self.data.get("id") if self.is_edit_mode else None
-        if self.model.is_fan_exists(fan, exclude_id=exclude_id):
-            QMessageBox.warning(
-                self,
-                "NUM FAN déjà existant",
-                f"Le numéro FAN « {fan} » est déjà utilisé par un autre équipement dans le stock !\n"
-                "Chaque équipement doit avoir un numéro FAN unique."
-            )
-            self._inp_fan.setFocus()
-            return
+        # ── Vérification condition d'unicité du FAN (exempté si 'FREE') ──
+        is_free = (fan.upper() == "FREE")
+        if not is_free:
+            exclude_id = self.data.get("id") if self.is_edit_mode else None
+            if self.model.is_fan_exists(fan, exclude_id=exclude_id):
+                QMessageBox.warning(
+                    self,
+                    "NUM FAN déjà existant",
+                    f"Le numéro FAN « {fan} » est déjà utilisé par un autre équipement dans le stock !\n"
+                    "Chaque équipement doit avoir un numéro FAN unique (sauf pour 'FREE')."
+                )
+                self._inp_fan.setFocus()
+                return
 
         self.accept()
 
@@ -165,9 +188,9 @@ class StockLaptopDialog(QDialog):
         """Retourne les valeurs saisies dans le formulaire."""
         return {
             "fan": self._inp_fan.text().strip(),
+            "user_id": self._inp_user_id.text().strip(),
             "serial": self._inp_serial.text().strip(),
             "model": self._inp_model.text().strip(),
             "quantite": self._spin_qty.value(),
             "license": self._combo_license.currentText(),
         }
-

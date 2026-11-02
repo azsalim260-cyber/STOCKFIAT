@@ -11,7 +11,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from PyQt6.QtWidgets import QMessageBox, QFileDialog
+from PyQt6.QtWidgets import QMessageBox, QFileDialog  # pyright: ignore[reportMissingImports]
 
 from models.parc_model import ParcModel
 from models.user_model import ROLES
